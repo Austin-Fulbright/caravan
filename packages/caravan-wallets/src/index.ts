@@ -3,6 +3,10 @@
 import { version } from "../package.json";
 import { UNSUPPORTED, UnsupportedInteraction } from "./interaction";
 import {
+  JADE,
+  JadeGetMetadata
+} from "./jade"
+import {
   BITBOX,
   BitBoxGetMetadata,
   BitBoxExportPublicKey,
@@ -74,6 +78,7 @@ export const MULTISIG_ROOT = "m/45'";
  * Keystores which support direct interactions.
  */
 export const DIRECT_KEYSTORES = {
+  JADE,
   BITBOX,
   TREZOR,
   LEDGER,
@@ -114,6 +119,8 @@ export type KEYSTORE_TYPES = (typeof KEYSTORES)[KEYSTORE_KEYS];
  */
 export function GetMetadata({ keystore }: { keystore: KEYSTORE_TYPES }) {
   switch (keystore) {
+    case JADE:
+      return new JadeGetMetadata();
     case BITBOX:
       return new BitBoxGetMetadata({});
     case LEDGER:
