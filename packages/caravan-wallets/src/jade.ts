@@ -7,11 +7,49 @@ import { BtcScriptConfig } from 'bitbox-api';
 
 export const JADE = "jade";
 
+
+/**
+ * Converts a BIP32 path string (e.g., "m/49'/0'/0'/0/143") into an array
+ * of unsigned 32-bit integers. Hardened indices are represented by adding 2^31.
+ *
+ * @param path - The BIP32 path string.
+ * @returns An array of numbers representing the path.
+ * @throws An error if any segment cannot be parsed as a number.
+ */
+export function parseBip32Path(path: string): number[] {
+  if (path.startsWith('m/')) {
+    path = path.substring(2);
+  } else if (path.startsWith('m')) {
+    path = path.substring(1);
+    if (path.startsWith('/')) {
+      path = path.substring(1);
+    }
+  }
+  const segments = path.split('/');
+  const result: number[] = [];
+  for (const segment of segments) {
+    // Check if the segment is hardened (ends with "'" or "h")
+    let hardened = false;
+    let numStr = segment;
+    if (segment.endsWith("'") || segment.endsWith("h")) {
+      hardened = true;
+      numStr = segment.slice(0, -1);
+    }
+    const index = parseInt(numStr, 10);
+    if (isNaN(index)) {
+      throw new Error(`Invalid path segment: ${segment}`);
+    }
+    // Hardened index = index + 0x80000000 (2^31)
+    result.push(index + (hardened ? 0x80000000 : 0));
+  }
+  return result;
+}
 /**
  * Base class for interactions with Jade hardware.
  * This class wraps a JadeAPI instance and provides helper methods
  * to perform operations on the device.
  */
+//TODO - possibly change around api so that you create a device class/object that you can pass around to functions outside classes
 export class JadeInteraction extends DirectKeystoreInteraction {
   protected jadeApi: JadeAPI;
 
@@ -51,7 +89,7 @@ export class JadeInteraction extends DirectKeystoreInteraction {
     try {
       // Connect to the device.
       await this.jadeApi.connect();
-  
+      //TODO - figure out how to tell the user to enter the pin in the jade device
       const httpRequestFn = async (params: any): Promise<{ body: any }> => {
         const url = params.urls[0];
         const response = await fetch(url, {
@@ -82,19 +120,43 @@ export class JadeInteraction extends DirectKeystoreInteraction {
 
 
   }
-  
-  async maybeRegisterMultisig(walletConfig: MultisigWalletConfig): Promise<{ scriptConfig: BtcScriptConfig, keypathAccount: string; }> {
 
-    const {scriptConfig, keypathAccount } = await convertMultisig();
+  async convertMultisig(walletConfig: MultisigWalletConfig): Promise<{ scriptConfig: BtcScriptConfig; keypathAccount: string; }> {
+    const ourRootFingerprint = await this.jadeApi.getRootFingerprint();
+  
+    const ourXpubIndex = walletConfig.extendedPublicKeys.findIndex(key => key.xfp == ourRootFingerprint);
+    if (ourXpubIndex === -1) {
+      throw new Error('This BitBox02 seems to not be present in the multisig quorum.');
+    }
+    const scriptConfig = {
+      multisig: {
+        threshold: walletConfig.quorum.requiredSigners,
+        scriptType: walletConfig.addressType,
+        xpubs: walletConfig.extendedPublicKeys.map(key => key.xpub),
+        ourXpubIndex,
+      },
+    };
+    const keypathAccount = walletConfig.extendedPublicKeys[ourXpubIndex].bip32Path;
+    return {
+      scriptConfig,
+      keypathAccount,
+    }
+  }
+
+
+  //TODO - add the jade device object as a parameter and pass it through
+  async maybeRegisterMultisig(walletConfig: MultisigWalletConfig): Promise<{ scriptConfig: BtcScriptConfig, keypathAccount: string; }> {
+    // create the convert multisig function that will return the scriptConfig and keypathaccount
+    const {scriptConfig, keypathAccount } = await this.convertMultisig(walletConfig);
     const isRegistered = await this.jadeApi.scriptConfigRegistered(
-      network,
+      walletConfig.network,
       scriptConfig,
       keypathAccount
     )
 
     if (!isRegistered) {
       await this.jadeApi.registerMultisig(
-        network,
+        walletConfig.network,
         scriptConfig,
         keypathAccount,
       );
@@ -161,12 +223,13 @@ export class JadeExportPublicKey extends JadeInteraction {
   }
 
   async run() {
-    return await this.withDevice(async (jadeApi)  => {
+    return await this.withDevice(async ()  => {
       //need to convert the bip32Path into an integer array
-      const xpub = await jadeApi.getXpub(this.network, this.bip32Path);
+      const path = parseBip32Path(this.bip32Path)
+      const xpub = await this.jadeApi.getXpub(this.network, path);
       const publicKey = ExtendedPublicKey.fromBase58(xpub).pubKey;
       if (this.includeXFP) {
-        const rootFingerprint = await jadeApi.rootFingerprint();
+        const rootFingerprint = await this.jadeApi.getRootFingerprint();
         return { publicKey, rootFingerprint };
       }
       return publicKey;
@@ -199,11 +262,12 @@ export class JadeExportExtendedPublicKey extends JadeInteraction {
   }
 
   async run() {
-    return await this.withDevice(async (jadeApi)  => {
-      //need to convert the bip32Path into an integer array
-      const xpub = await jadeApi.getXpub(this.network, this.bip32Path);
+    return await this.withDevice(async ()  => {
+      const path = parseBip32Path(this.bip32Path)
+      const xpub = await this.jadeApi.getXpub(this.network, path);
       if (this.includeXFP) {
-        const rootFingerprint = await jadeApi.rootFingerprint();
+        //TODO - need to add root fingerprint or get xfp to the jade-hw-api
+        const rootFingerprint = await this.jadeApi.getRootFingerprint();
         return { xpub, rootFingerprint };
       }
       return xpub;
@@ -318,19 +382,13 @@ export class JadeSignMultisigTransaction extends JadeInteraction {
   }
 
   async run() {
-    return await this.withDevice(async (pairedBitBox) => {
-      const { scriptConfig, keypathAccount } = await this.maybeRegisterMultisig(pairedBitBox, this.walletConfig);
+    return await this.withDevice(async () => {
       const signedPsbt = await this.jadeApi.signPSBT(
         this.walletConfig.network,
-        this.unsignedPsbt,
-        {
-          scriptConfig,
-          keypath: keypathAccount,
-        },
-        'default',
+        this.unsignedPsbt
       );
       if (this.returnSignatureArray) {
-        const rootFingerprint = await this.jadeApi.rootFingerprint();
+        const rootFingerprint = await this.jadeApi.getRootFingerprint();
         const parsedPsbt = parsePsbt(signedPsbt);
         let sigArray: string[] = [];
         for (let i = 0; i < parsedPsbt.PSBT_GLOBAL_INPUT_COUNT; i++) {
