@@ -23,7 +23,8 @@
     "turbo": "^2.0.3"
   },
   "dependencies": {
-    "@ledgerhq/hw-transport-webusb": "6.27.12"
+    "@ledgerhq/hw-transport-webusb": "6.27.12",
+    "jade-hw-api": "^1.0.4"
   },
   "engines": {
     "node": ">=20"
