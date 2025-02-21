@@ -4,7 +4,12 @@ import { version } from "../package.json";
 import { UNSUPPORTED, UnsupportedInteraction } from "./interaction";
 import {
   JADE,
-  JadeGetMetadata
+  JadeGetMetadata,
+  JadeExportPublicKey,
+  JadeExportExtendedPublicKey,
+  JadeConfirmMultisigAddress,
+  JadeRegisterWalletPolicy,
+  JadeSignMultisigTransaction
 } from "./jade"
 import {
   BITBOX,
@@ -160,6 +165,12 @@ export function ExportPublicKey({
   includeXFP: boolean;
 }) {
   switch (keystore) {
+    case JADE:
+      return new JadeExportPublicKey({
+        network,
+        bip32Path,
+        includeXFP
+      })
     case BITBOX:
       return new BitBoxExportPublicKey({
         network,
@@ -206,6 +217,7 @@ export function SignMessage({
   message: string;
 }) {
   switch (keystore) {
+
     case LEDGER:
       return new LedgerSignMessage({
         bip32Path,
@@ -249,6 +261,12 @@ export function ExportExtendedPublicKey({
   includeXFP: boolean;
 }) {
   switch (keystore) {
+    case JADE:
+      return new JadeExportExtendedPublicKey({
+        bip32Path,
+        network,
+        includeXFP
+      })
     case BITBOX:
       return new BitBoxExportExtendedPublicKey({
         bip32Path,
@@ -585,6 +603,10 @@ export function RegisterWalletPolicy({
   verify: boolean;
 } & MultisigWalletConfig) {
   switch (keystore) {
+    case JADE:
+      return new JadeRegisterWalletPolicy({
+        walletConfig
+      })
     case BITBOX:
       return new BitBoxRegisterWalletPolicy({
         walletConfig,
