@@ -1,6 +1,6 @@
 import { DirectKeystoreInteraction, PENDING, ACTIVE, INFO } from './interaction'; // or your actual base class location
 import { JadeAPI } from 'jade-hw-api';
-import { BitcoinNetwork, ExtendedPublicKey, getPsbtVersionNumber, PsbtV2, MultisigAddressType} from "@caravan/bitcoin";
+import { BitcoinNetwork, ExtendedPublicKey, getPsbtVersionNumber, PsbtV2} from "@caravan/bitcoin";
 import { MultisigWalletConfig } from './types';
 import { BtcScriptConfig } from 'bitbox-api';
 
@@ -16,7 +16,8 @@ export const JADE = "jade";
  * @returns An array of numbers representing the path.
  * @throws An error if any segment cannot be parsed as a number.
  */
-export function parseBip32Path(path: string): number[] {
+export function parseBip32Path(path_i: string): number[] {
+  let path = path_i;
   if (path.startsWith('m/')) {
     path = path.substring(2);
   } else if (path.startsWith('m')) {
@@ -121,13 +122,14 @@ export class JadeInteraction extends DirectKeystoreInteraction {
 
   }
 
-  async convertMultisig(walletConfig: MultisigWalletConfig): Promise<{ scriptConfig: BtcScriptConfig; keypathAccount: string; }> {
+  async convertMultisig(walletConfig: MultisigWalletConfig): Promise<{ scriptConfig: any; keypathAccount: string; }> {
     const ourRootFingerprint = await this.jadeApi.getRootFingerprint();
   
     const ourXpubIndex = walletConfig.extendedPublicKeys.findIndex(key => key.xfp == ourRootFingerprint);
     if (ourXpubIndex === -1) {
       throw new Error('This BitBox02 seems to not be present in the multisig quorum.');
     }
+    //Need to convert this to our way of getting the signers attached to each public key
     const scriptConfig = {
       multisig: {
         threshold: walletConfig.quorum.requiredSigners,
@@ -148,12 +150,13 @@ export class JadeInteraction extends DirectKeystoreInteraction {
   async maybeRegisterMultisig(walletConfig: MultisigWalletConfig): Promise<{ scriptConfig: BtcScriptConfig, keypathAccount: string; }> {
     // create the convert multisig function that will return the scriptConfig and keypathaccount
     const {scriptConfig, keypathAccount } = await this.convertMultisig(walletConfig);
-    const isRegistered = await this.jadeApi.scriptConfigRegistered(
+    //const isRegistered = false;
+    /*await this.jadeApi.scriptConfigRegistered(
       walletConfig.network,
       scriptConfig,
       keypathAccount
-    )
-
+    )*/
+    /*
     if (!isRegistered) {
       await this.jadeApi.registerMultisig(
         walletConfig.network,
@@ -161,7 +164,7 @@ export class JadeInteraction extends DirectKeystoreInteraction {
         keypathAccount,
       );
     }
-
+    */
     return {scriptConfig, keypathAccount};
 
   }
@@ -227,7 +230,7 @@ export class JadeExportPublicKey extends JadeInteraction {
       //need to convert the bip32Path into an integer array
       const path = parseBip32Path(this.bip32Path)
       const xpub = await this.jadeApi.getXpub(this.network, path);
-      const publicKey = ExtendedPublicKey.fromBase58(xpub).pubKey;
+      const publicKey = ExtendedPublicKey.fromBase58(xpub).pubkey;
       if (this.includeXFP) {
         const rootFingerprint = await this.jadeApi.getRootFingerprint();
         return { publicKey, rootFingerprint };
@@ -331,12 +334,14 @@ export class JadeConfirmMultisigAddress extends JadeInteraction {
 
   async run() {
     return await this.withDevice(async () => {
-      const { scriptConfig } = await this.maybeRegisterMultisig(this.walletConfig);
-      const address = await this.jadeApi.getBitcoinAddress(
+      //const { scriptConfig } = await this.maybeRegisterMultisig(this.walletConfig);
+      const address = "placeholder";
+      /*await this.jadeApi.getBitcoinAddress(
         this.network,
         this.bip32Path,
         scriptConfig
       );
+      */
       return {
         address,
         serializedPath: this.bip32Path,

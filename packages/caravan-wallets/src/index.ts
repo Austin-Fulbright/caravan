@@ -7,7 +7,6 @@ import {
   JadeGetMetadata,
   JadeExportPublicKey,
   JadeExportExtendedPublicKey,
-  JadeConfirmMultisigAddress,
   JadeRegisterWalletPolicy,
   JadeSignMultisigTransaction
 } from "./jade"
@@ -384,6 +383,20 @@ export function SignMultisigTransaction({
   progressCallback,
 }: SignMultisigTransactionArgs) {
   switch (keystore) {
+    case JADE: {
+      let _psbt = psbt;
+      if (!_psbt)
+        _psbt = getUnsignedMultisigPsbtV0({
+          network,
+          inputs: inputs ? inputs.map(convertLegacyInput) : [],
+          outputs: outputs ? outputs.map(convertLegacyOutput) : [],
+        }).toBase64();
+      return new JadeSignMultisigTransaction({
+        walletConfig,
+        psbt,
+        returnSignatureArray,
+      });
+    }
     case BITBOX: {
       let _psbt = psbt;
       if (!_psbt)

@@ -84,7 +84,7 @@ class ExtendedPublicKeyImporter extends React.Component {
             onChange={this.handleMethodChange}
           >
             {addressType != P2SH && <MenuItem value={BITBOX}>BitBox</MenuItem>}
-            <MenuItem value={JADE}>Trezor</MenuItem>
+            <MenuItem value={JADE}>Jade</MenuItem>
             <MenuItem value={TREZOR}>Trezor</MenuItem>
             <MenuItem value={COLDCARD}>Coldcard</MenuItem>
             <MenuItem value={LEDGER}>Ledger</MenuItem>
