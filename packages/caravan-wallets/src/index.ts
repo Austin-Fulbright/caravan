@@ -8,7 +8,8 @@ import {
   JadeExportPublicKey,
   JadeExportExtendedPublicKey,
   JadeRegisterWalletPolicy,
-  JadeSignMultisigTransaction
+  JadeSignMultisigTransaction,
+  JadeConfirmMultisigAddress
 } from "./jade"
 import {
   BITBOX,
@@ -557,6 +558,16 @@ export function ConfirmMultisigAddress({
   walletConfig?: MultisigWalletConfig;
 }) {
   switch (keystore) {
+    case JADE: {
+      const braidDetails: BraidDetails = JSON.parse(multisig.braidDetails);
+      const _walletConfig =
+        walletConfig || braidDetailsToWalletConfig(braidDetails);
+      return new JadeConfirmMultisigAddress({
+        network,
+        bip32Path,
+        walletConfig: _walletConfig,
+      });
+    }
     case BITBOX: {
       const braidDetails: BraidDetails = JSON.parse(multisig.braidDetails);
       const _walletConfig =
