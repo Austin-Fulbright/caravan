@@ -3,10 +3,9 @@ import type { JestConfigWithTsJest } from "ts-jest";
 const config: JestConfigWithTsJest = {
   extensionsToTreatAsEsm: [".ts"],
   verbose: true,
-
   testEnvironment: "node",
   testPathIgnorePatterns: ["./lib"],
-  transformIgnorePatterns: ["/node_modules/(?!uint8array-tools)"],
+  transformIgnorePatterns: ["/node_modules/(?!uint8array-tools|cbor2)"],
   transform: {
     "^.+\\.js$": "babel-jest",
     "^.+\\.ts?$": [
@@ -20,3 +19,4 @@ const config: JestConfigWithTsJest = {
 };
 
 export default config;
+
