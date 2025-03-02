@@ -1,6 +1,14 @@
-import { BITBOX, TREZOR, LEDGER, HERMIT, COLDCARD } from "@caravan/wallets";
+import {
+  BITBOX,
+  TREZOR,
+  LEDGER,
+  HERMIT,
+  COLDCARD,
+  JADE,
+} from "@caravan/wallets";
 import { TEST_FIXTURES } from "@caravan/bitcoin";
 
+import jadeTests from "./jade";
 import bitboxTests from "./bitbox";
 import trezorTests from "./trezor";
 import ledgerTests from "./ledger";
@@ -9,6 +17,7 @@ import coldcardTests from "./coldcard";
 
 const SUITE = {};
 
+SUITE[JADE] = jadeTests;
 SUITE[BITBOX] = bitboxTests;
 SUITE[TREZOR] = trezorTests;
 SUITE[LEDGER] = ledgerTests;

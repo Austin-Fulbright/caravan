@@ -1,7 +1,7 @@
 import React from "react";
 
 import { TEST_FIXTURES } from "@caravan/bitcoin";
-import { BITBOX, RegisterWalletPolicy } from "@caravan/wallets";
+import { JADE, BITBOX, RegisterWalletPolicy } from "@caravan/wallets";
 import { Box, Table, TableBody, TableRow, TableCell } from "@mui/material";
 
 import Test from "./Test";
@@ -13,7 +13,7 @@ class RegisterWalletPolicyTest extends Test {
   }
 
   expected() {
-    if (this.params.keystore === BITBOX) {
+    if (this.params.keystore === BITBOX || this.params.keystore === JADE) {
       // BitBox does not use HMACs to register policies.
       return undefined;
     }
