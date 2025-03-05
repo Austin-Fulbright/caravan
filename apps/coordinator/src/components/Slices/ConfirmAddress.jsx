@@ -24,6 +24,7 @@ import {
   P2SH,
 } from "@caravan/bitcoin";
 import {
+  JADE,
   BITBOX,
   TREZOR,
   LEDGER,
@@ -140,6 +141,7 @@ const ConfirmAddress = ({ slice, network }) => {
       }
       // FIXME - hardcoded to just show up for trezor
       if (
+        extendedPublicKeyImporter.method === JADE ||
         extendedPublicKeyImporter.method === BITBOX ||
         extendedPublicKeyImporter.method === TREZOR ||
         extendedPublicKeyImporter.method === LEDGER
@@ -233,6 +235,7 @@ const ConfirmAddress = ({ slice, network }) => {
               variant="standard"
             >
               <MenuItem value="">{"< Select method >"}</MenuItem>
+              <MenuItem value={JADE}>Jade</MenuItem>
               {addressType != P2SH && (
                 <MenuItem value={BITBOX}>BitBox</MenuItem>
               )}
