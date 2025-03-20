@@ -9,13 +9,14 @@ export const JADE = "jade";
 
 function convertToMyMultisigVariant(
   addressType: MultisigAddressType,
-  threshold: number
 ): string {
   switch (addressType) {
+    case 'P2SH':
+      return `sh(multi(k))`;
     case 'P2WSH':
-      return `wsh(multi(${threshold}))`;
+      return `wsh(multi(k))`;
     case 'P2SH-P2WSH':
-      return `sh(wsh(multi(${threshold})))`;
+      return `sh(wsh(multi(k)))`;
     default:
       throw new Error(`Unsupported multisig address type: ${addressType}`);
   }
@@ -82,11 +83,11 @@ export class JadeInteraction extends DirectKeystoreInteraction {
   }
 
 
-  async withDevice<T>(f: (jadeApi: JadeAPI) => Promise<T>): Promise<T> {
+  async withDevice<T>(network: string, f: (jadeApi: JadeAPI) => Promise<T>): Promise<T> {
     try {
       // Connect to the device.
       await this.jadeApi.connect();
-      //TODO - figure out how to tell the user to enter the pin in the jade device
+
       const httpRequestFn = async (params: any): Promise<{ body: any }> => {
         const url = params.urls[0];
         const response = await fetch(url, {
@@ -101,12 +102,12 @@ export class JadeInteraction extends DirectKeystoreInteraction {
         return { body };
       };
   
-      const unlockResult = await this.jadeApi.authUser("mainnet", httpRequestFn);
+      const unlockResult = await this.jadeApi.authUser(network, httpRequestFn);
       if (unlockResult !== true) {
         throw new Error("Failed to unlock Jade device");
       }
       if (this.rootFingerprint === "") {
-        const xpub = await this.jadeApi.getXpub("mainnet", [0, 0]);
+        const xpub = await this.jadeApi.getXpub(network, []);
         this.rootFingerprint = getRootFingerprint(xpub);
       }
       try {
@@ -129,7 +130,6 @@ convertMultisig(walletConfig: MultisigWalletConfig): any {
     descriptor: {
       variant: convertToMyMultisigVariant(
         walletConfig.addressType,
-        walletConfig.quorum.requiredSigners
       ),
       sorted_keys: false,
       threshold: walletConfig.quorum.requiredSigners,
@@ -190,7 +190,7 @@ export class JadeGetMetadata extends JadeInteraction {
     version: { major: string; minor: string; patch: string; string: string };
     model: string;
   }> {
-    return this.withDevice(async (jadeApi: JadeAPI) => {
+    return this.withDevice('mainnet', async (jadeApi: JadeAPI) => {
       const versionInfo = await jadeApi.getVersionInfo();
       const version = versionInfo.JADE_VERSION || "";
       const [major, minor, patch] = version.split(".");
@@ -232,9 +232,9 @@ export class JadeExportPublicKey extends JadeInteraction {
   }
 
   async run() {
-    return await this.withDevice(async ()  => {
+    return await this.withDevice(this.network, async (jadeApi: JadeAPI)  => {
       const path = parseBip32Path(this.bip32Path);
-      const xpub = await this.jadeApi.getXpub(this.network, path);
+      const xpub = await jadeApi.getXpub(this.network, path);
       const publicKey = ExtendedPublicKey.fromBase58(xpub).pubkey;
       if (this.includeXFP) {
         return { publicKey, rootFingerprint: this.rootFingerprint };
@@ -269,9 +269,9 @@ export class JadeExportExtendedPublicKey extends JadeInteraction {
   }
 
   async run() {
-    return await this.withDevice(async ()  => {
+    return await this.withDevice(this.network, async (jadeApi: JadeAPI)  => {
       const path = parseBip32Path(this.bip32Path)
-      const xpub = await this.jadeApi.getXpub(this.network, path);
+      const xpub = await jadeApi.getXpub(this.network, path);
       if (this.includeXFP) {
         return { xpub, rootFingerprint: this.rootFingerprint };
       }
@@ -301,7 +301,7 @@ export class JadeRegisterWalletPolicy extends JadeInteraction {
   }
 
   async run() {
-    return await this.withDevice(async () => {
+    return await this.withDevice(this.walletConfig.network, async () => {
       await this.registerMultisig(this.walletConfig);
     });
 }
@@ -337,7 +337,7 @@ export class JadeConfirmMultisigAddress extends JadeInteraction {
   }
 
   async run() {
-    return await this.withDevice(async () => {
+    return await this.withDevice(this.network, async (jadeApi: JadeAPI) => {
       // Confirm the multisig configuration on the device
       const multisigScript = await this.confirmMultisig(this.walletConfig.name!);
       if (multisigScript!) {
@@ -355,7 +355,7 @@ export class JadeConfirmMultisigAddress extends JadeInteraction {
         });
       });
       // Request the receive address from the device
-      const address = await this.jadeApi.getMultisigReceiveAddress(this.walletConfig.network, this.walletConfig.name!, paths);
+      const address = await jadeApi.getMultisigReceiveAddress(this.walletConfig.network, this.walletConfig.name!, paths);
   
       return {
         address,
@@ -381,8 +381,6 @@ export class JadeSignMultisigTransaction extends JadeInteraction {
 
   private returnSignatureArray: boolean;
 
-  // keeping this until we have a way to add signatures to psbtv2 directly
-  // this will store the the PSBT that was was passed in via args
   private unsignedPsbt: string;
 
   constructor({
@@ -402,8 +400,8 @@ export class JadeSignMultisigTransaction extends JadeInteraction {
   }
 
   async run() {
-    return await this.withDevice(async () => {
-      const signedPsbt = await this.jadeApi.signPSBT(
+    return await this.withDevice(this.walletConfig.network, async (jadeApi: JadeAPI) => {
+      const signedPsbt = await jadeApi.signPSBT(
         this.walletConfig.network,
         this.unsignedPsbt
       );
