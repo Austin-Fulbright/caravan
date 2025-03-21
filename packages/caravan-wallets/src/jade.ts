@@ -401,10 +401,13 @@ export class JadeSignMultisigTransaction extends JadeInteraction {
 
   async run() {
     return await this.withDevice(this.walletConfig.network, async (jadeApi: JadeAPI) => {
+      console.log("unsignedpsbt: ", this.unsignedPsbt);
+      console.log("this.walletConfig: ", this.walletConfig);
       const signedPsbt = await jadeApi.signPSBT(
         this.walletConfig.network,
         this.unsignedPsbt
       );
+      console.log("signedPsbt: ", signedPsbt);
       if (this.returnSignatureArray) {
         const rootFingerprint = this.rootFingerprint;
         const parsedPsbt = parsePsbt(signedPsbt);
@@ -425,9 +428,10 @@ export class JadeSignMultisigTransaction extends JadeInteraction {
           }
           sigArray.push(partialSig.value!);
         }
-
+        console.log("sigArray: ", sigArray);
         return sigArray;
       }
+      console.log("signedPsbt returned: ", signedPsbt);
       return signedPsbt;
     });
   }
