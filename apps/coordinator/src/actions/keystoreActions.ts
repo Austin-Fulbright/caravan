@@ -1,10 +1,18 @@
-import { BITBOX, TREZOR, LEDGER, HERMIT, COLDCARD } from "@caravan/wallets";
+import {
+  JADE,
+  BITBOX,
+  TREZOR,
+  LEDGER,
+  HERMIT,
+  COLDCARD,
+} from "@caravan/wallets";
 
 export const SET_KEYSTORE = "SET_KEYSTORE";
 export const SET_KEYSTORE_NOTE = "SET_KEYSTORE_NOTE";
 export const SET_KEYSTORE_STATUS = "SET_KEYSTORE_STATUS";
 
 type KeyStoreType =
+  | typeof JADE
   | typeof BITBOX
   | typeof TREZOR
   | typeof LEDGER

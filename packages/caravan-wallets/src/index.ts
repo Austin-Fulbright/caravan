@@ -15,7 +15,15 @@ import {
 } from "@caravan/psbt";
 
 import { version } from "../package.json";
-
+import {
+  JADE,
+  JadeGetMetadata,
+  JadeExportPublicKey,
+  JadeExportExtendedPublicKey,
+  JadeConfirmMultisigAddress,
+  JadeRegisterWalletPolicy,
+  JadeSignMultisigTransaction,
+} from "./jade";
 import {
   BITBOX,
   BitBoxGetMetadata,
@@ -70,12 +78,13 @@ import {
  */
 export const VERSION: string = version;
 
-export { MULTISIG_ROOT } from './constants';
+export { MULTISIG_ROOT } from "./constants";
 
 /**
  * Keystores which support direct interactions.
  */
 export const DIRECT_KEYSTORES = {
+  JADE,
   BITBOX,
   TREZOR,
   LEDGER,
@@ -116,6 +125,8 @@ export type KEYSTORE_TYPES = (typeof KEYSTORES)[KEYSTORE_KEYS];
  */
 export function GetMetadata({ keystore }: { keystore: KEYSTORE_TYPES }) {
   switch (keystore) {
+    case JADE:
+      return new JadeGetMetadata();
     case BITBOX:
       return new BitBoxGetMetadata({});
     case LEDGER:
@@ -155,6 +166,12 @@ export function ExportPublicKey({
   includeXFP: boolean;
 }) {
   switch (keystore) {
+    case JADE:
+      return new JadeExportPublicKey({
+        network,
+        bip32Path,
+        includeXFP,
+      });
     case BITBOX:
       return new BitBoxExportPublicKey({
         network,
@@ -244,6 +261,12 @@ export function ExportExtendedPublicKey({
   includeXFP: boolean;
 }) {
   switch (keystore) {
+    case JADE:
+      return new JadeExportExtendedPublicKey({
+        bip32Path,
+        network,
+        includeXFP,
+      });
     case BITBOX:
       return new BitBoxExportExtendedPublicKey({
         bip32Path,
@@ -361,6 +384,20 @@ export function SignMultisigTransaction({
   progressCallback,
 }: SignMultisigTransactionArgs) {
   switch (keystore) {
+    case JADE: {
+      let _psbt = psbt;
+      if (!_psbt)
+        _psbt = getUnsignedMultisigPsbtV0({
+          network,
+          inputs: inputs ? inputs.map(convertLegacyInput) : [],
+          outputs: outputs ? outputs.map(convertLegacyOutput) : [],
+        }).toBase64();
+      return new JadeSignMultisigTransaction({
+        walletConfig,
+        psbt,
+        returnSignatureArray,
+      });
+    }
     case BITBOX: {
       let _psbt = psbt;
       if (!_psbt)
@@ -521,6 +558,16 @@ export function ConfirmMultisigAddress({
   walletConfig?: MultisigWalletConfig;
 }) {
   switch (keystore) {
+    case JADE: {
+      const braidDetails: BraidDetails = JSON.parse(multisig.braidDetails);
+      const _walletConfig =
+        walletConfig || braidDetailsToWalletConfig(braidDetails);
+      return new JadeConfirmMultisigAddress({
+        network,
+        bip32Path,
+        walletConfig: _walletConfig,
+      });
+    }
     case BITBOX: {
       const braidDetails: BraidDetails = JSON.parse(multisig.braidDetails);
       const _walletConfig =
@@ -580,6 +627,10 @@ export function RegisterWalletPolicy({
   verify: boolean;
 } & MultisigWalletConfig) {
   switch (keystore) {
+    case JADE:
+      return new JadeRegisterWalletPolicy({
+        walletConfig,
+      });
     case BITBOX:
       return new BitBoxRegisterWalletPolicy({
         walletConfig,
@@ -612,6 +663,17 @@ export function ConfigAdapter({
   policyHmac?: string;
 }) {
   switch (KEYSTORE) {
+    case JADE: {
+      let walletConfig: MultisigWalletConfig;
+      if (typeof jsonConfig === "string") {
+        walletConfig = JSON.parse(jsonConfig);
+      } else {
+        walletConfig = jsonConfig;
+      }
+      return new JadeRegisterWalletPolicy({
+        walletConfig,
+      });
+    }
     case BITBOX: {
       let walletConfig: MultisigWalletConfig;
       if (typeof jsonConfig === "string") {
@@ -646,6 +708,7 @@ export function ConfigAdapter({
 }
 
 export * from "./interaction";
+export * from "./jade";
 export * from "./bitbox";
 export * from "./bcur";
 export * from "./coldcard";

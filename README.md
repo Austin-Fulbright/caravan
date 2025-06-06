@@ -17,6 +17,7 @@ This is a monorepo project for the Caravan FOSS ecosystem, built with
 [Turborepo](https://turbo.build/repo/docs).
 
 There are two primary directories for managing projects:
+
 - apps
 - packages
 
@@ -32,7 +33,6 @@ the expectation is that they will be split up as well. For
 example the `psbt` module in `@caravan/bitcoin` will become
 `@caravan/psbt`.
 
-
 ## Goals
 
 There are a few goals for this new conception of the "Caravan"
@@ -44,8 +44,8 @@ project.
 - Having tightly scoped libraries will make code easier and safer to audit and build out.
 - Having a unified set of developer tooling (linting rules, deployment automation, etc.) also improves developer QoL and code reliability.
 
-
 ## Developers
+
 The monorepo setup should make it easier for developers to test their changes
 in a more realistic environment, especially when making changes to libraries
 that are dependencies of the coordinator.
@@ -56,6 +56,7 @@ A changeset will be _required_ for PRs to be merged. Read below to learn more.
 ### Changesets
 
 #### Quickstart
+
 Any PR to caravan that introduces a functional change requires a changeset be submitted with it.
 
 Simply run the following command and follow the cli instructions:
@@ -73,6 +74,7 @@ Pull Requests are checked for changesets by the [changeset-bot](https://github.c
 and publish on merge.
 
 #### About Changesets
+
 This is the [recommended way by Turborepo](https://turbo.build/repo/docs/handbook/publishing-packages/versioning-and-publishing)
 to handle changelogs, versioning, and releases.
 It's designed first as a manual process, so by default it won't "yell" at you to do
@@ -97,7 +99,6 @@ And another good resource for what the workflow should look like [here](https://
 
 [Automating Changesets](https://github.com/changesets/changesets/blob/main/docs/automating-changesets.md)
 
-
 ## Getting started
 
 ### Quickstart
@@ -119,6 +120,7 @@ $ turbo run dev # or `npm run dev`
 ```
 
 #### What's happening?
+
 The turbo.json file is the main config for the monorepo. You can read
 about running tasks in Turborepo [here](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks#turborepo-can-multitask).
 
@@ -130,6 +132,7 @@ The main scripts to be run are defined in this config file:
 `build`, `lint`, `test`, and `dev`.
 
 ## Development
+
 One of the main benefits of a monorepo for this type of project is
 being able to easily work with multiple dependencies you're developing
 at the same time. Note for example that in the `caravan/coordinator`'s
@@ -147,6 +150,7 @@ $ turbo run test:debug --scope=@caravan/bitcoin --no-deps --no-cache
 - `--no-cache` also optional and self-explanatory. Usually not necessary but turborepo does a lot of cacheing so good to be aware of.
 
 ### Dependencies
+
 The `--no-deps` option highlights a lot of the benefits of the monorepo. If you make a change in one library,
 anything else that relies on it should be tested to make sure they're not broken too.
 If you want to break this coupling, a published package version can be referenced instead of
@@ -165,14 +169,15 @@ and then when the package is attempted to be installed by external downstream pr
 and find the internal dependency in a remote registry (which will fail). By including it in the
 devDependency:
 
-* the dependency graph will be correct
-* the bundler will build it in with the final package
-* other projects won't try and install the internal dependency
+- the dependency graph will be correct
+- the bundler will build it in with the final package
+- other projects won't try and install the internal dependency
 
 @caravan/multisig is an example of such a package that is depended on by other packages
 like @caravan/psbt and @caravan/wallets.
 
 ### Adding a new package
+
 NOTE: Turborepo provides [code generator capability](https://turbo.build/repo/docs/core-concepts/monorepos/code-generation)
 for bootstrapping a new project. You can run `turbo gen` or `npm run gen`
 from the root of the project and you will be prompted through some
@@ -182,6 +187,7 @@ You can keep reading this section to understand what's being built out
 and write a fully functioning package yourself.
 
 #### Manually adding a new package
+
 `packages/caravan-psbt` is a good starting point for a simple package.
 
 Let's make a package `@caravan/clients`. This is code that's being added
@@ -189,8 +195,10 @@ to caravan in [this PR](https://github.com/unchained-capital/caravan/pull/365)
 but would be a good candidate for a standalone package.
 
 1. Initialize the project directory
+
 - `packages/caravan-clients`
 - `cd packages/caravan-clients && npm init`
+
 ```shell
 package name: @caravan/clients
 version: 0.0.0
@@ -201,7 +209,9 @@ keywords: ...
 author: ...
 license: MIT
 ```
+
 This will initialize a package.json for you. But we want to add a few more fields for a final version:
+
 ```json
 {
   "name": "@caravan/clients",
@@ -223,13 +233,7 @@ This will initialize a package.json for you. But we want to add a few more field
     "test": "jest src",
     "test:watch": "jest --watch src"
   },
-  "keywords": [
-    "bitcoin",
-    "client",
-    "mempool",
-    "blockstream",
-    "blockchain"
-  ],
+  "keywords": ["bitcoin", "client", "mempool", "blockstream", "blockchain"],
   "author": "Buck Perley",
   "license": "MIT",
   "engines": {
@@ -243,6 +247,7 @@ This will initialize a package.json for you. But we want to add a few more field
 ```
 
 - Install some more dependencies (from package dir):
+
 ```shell
 $ npm install --save-dev typescript tsup eslint jest ts-jest
 ```
@@ -250,13 +255,12 @@ $ npm install --save-dev typescript tsup eslint jest ts-jest
 (alternatively can use the `--scope` arg to target the package from the root)
 
 - Add configs: `eslintrc.js`, `tsconfig.json`, `jest.config.js`:
+
 ```javascript
 // .eslintrc.js
 module.exports = {
   root: true,
-  extends: [
-    "@caravan/eslint-config/library.js"
-  ],
+  extends: ["@caravan/eslint-config/library.js"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: true,
@@ -269,21 +273,22 @@ module.exports = {
 {
   "extends": "@caravan/typescript-config/base.json"
 }
-
 ```
 
 ```javascript
 // jest.config.js
 module.exports = {
   preset: "ts-jest",
-  testEnvironment: "node"
+  testEnvironment: "node",
 };
 ```
+
 - create a `src/` directory and add the entrypoint `index.ts` file
 - add our module file(s) (e.g. `src/clients.ts`) and test file(s) (e.g. `src/clients.test.ts`)
   - NOTE: when these files were copied over, they came from caravan when not all files were converted to typescript. A `transform` field needed to be added to the jest config as well as `babel-jest` package to handle js transformations for those older files.
 - You should now be able to run `turbo run test --scope=@caravan/clients` and `turbo run build --scope=@caravan/clients` to test and build
 - To start using this in another package, say `caravan-coordinator` simply add it to the package.json with a `*`:
+
 ```json
 {
   "dependencies": {
@@ -293,8 +298,10 @@ module.exports = {
   }
 }
 ```
+
 - Run the development server with turbo: `turbo run dev`
 - Add to `ClientPicker/index.tsx` (as an example):
+
 ```typescript
 import { BlockchainClient, ClientType } from "@caravan/clients";
 
@@ -310,13 +317,15 @@ import { BlockchainClient, ClientType } from "@caravan/clients";
   };
 ...
 ```
+
 - Note that now not only if you make a change to `caravan/coordinator` the changes will be reflected almost instantly in the app, but you can also make a change to the dependencies and everything will rebuild (technically turborepo only rebuilds what is necessary, caching the rest). Add a console.log to the `getFeeEstimate` in the `BlockchainClient` app and see for yourself!
 
 ## Troubleshooting
+
 - you might see an error "The request '...' failed to resolve only because it was resolved as fully specified"
-Webpack has an [issue](https://github.com/webpack/webpack/issues/11467#issuecomment-691873586) by default
-resolving the built module package if the extension is not specified. You can fix this by adding the following
-rule to your webpack config (module.rules array):
+  Webpack has an [issue](https://github.com/webpack/webpack/issues/11467#issuecomment-691873586) by default
+  resolving the built module package if the extension is not specified. You can fix this by adding the following
+  rule to your webpack config (module.rules array):
 
 ```javascript
 {
@@ -326,6 +335,7 @@ rule to your webpack config (module.rules array):
   }
 },
 ```
+
 This will usually happen if a package was written trying to do a direct import of a file from a dependency and not
 specifying the extension, for example:
 

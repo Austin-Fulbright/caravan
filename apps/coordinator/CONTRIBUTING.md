@@ -39,6 +39,7 @@ git checkout -b my-branch
 3. Ensure your changes pass linting and testing:
 
 To test:
+
 ```sh
 npm test
 ```
@@ -76,8 +77,7 @@ npm run release
 git push --follow-tags origin master
 ```
 
-Then go to GitHub and create a release in the UI.  This will trigger a build and deployment to GitHub pages.
-
+Then go to GitHub and create a release in the UI. This will trigger a build and deployment to GitHub pages.
 
 ## Help needed
 
