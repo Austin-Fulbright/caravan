@@ -15,15 +15,7 @@ import {
 } from "@caravan/psbt";
 
 import { version } from "../package.json";
-import {
-  JADE,
-  JadeGetMetadata,
-  JadeExportPublicKey,
-  JadeExportExtendedPublicKey,
-  JadeConfirmMultisigAddress,
-  JadeRegisterWalletPolicy,
-  JadeSignMultisigTransaction,
-} from "./jade";
+
 import {
   BITBOX,
   BitBoxGetMetadata,
@@ -51,6 +43,15 @@ import {
   HermitSignMultisigTransaction,
 } from "./hermit";
 import { UNSUPPORTED, UnsupportedInteraction } from "./interaction";
+import {
+  JADE,
+  JadeGetMetadata,
+  JadeExportPublicKey,
+  JadeExportExtendedPublicKey,
+  JadeConfirmMultisigAddress,
+  JadeRegisterWalletPolicy,
+  JadeSignMultisigTransaction,
+} from "./jade";
 import {
   LEDGER,
   LEDGER_V2,

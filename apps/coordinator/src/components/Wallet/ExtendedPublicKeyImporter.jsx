@@ -9,7 +9,14 @@ import {
   Network,
   P2SH,
 } from "@caravan/bitcoin";
-import { JADE, BITBOX, TREZOR, LEDGER, HERMIT, COLDCARD } from "@caravan/wallets";
+import {
+  JADE,
+  BITBOX,
+  TREZOR,
+  LEDGER,
+  HERMIT,
+  COLDCARD,
+} from "@caravan/wallets";
 import {
   Card,
   CardHeader,
@@ -108,7 +115,12 @@ class ExtendedPublicKeyImporter extends React.Component {
     } = this.props;
     const { method } = extendedPublicKeyImporter;
 
-    if (method === JADE || method === BITBOX || method === TREZOR || method === LEDGER) {
+    if (
+      method === JADE ||
+      method === BITBOX ||
+      method === TREZOR ||
+      method === LEDGER
+    ) {
       return (
         <DirectExtendedPublicKeyImporter
           extendedPublicKeyImporter={extendedPublicKeyImporter}

@@ -1,4 +1,11 @@
-import { JADE, BITBOX, TREZOR, LEDGER, HERMIT, COLDCARD } from "@caravan/wallets";
+import {
+  JADE,
+  BITBOX,
+  TREZOR,
+  LEDGER,
+  HERMIT,
+  COLDCARD,
+} from "@caravan/wallets";
 import { TEST_FIXTURES } from "@caravan/bitcoin";
 
 import jadeTests from "./jade";
