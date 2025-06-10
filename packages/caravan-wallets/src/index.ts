@@ -51,6 +51,7 @@ import {
   JadeConfirmMultisigAddress,
   JadeRegisterWalletPolicy,
   JadeSignMultisigTransaction,
+  JadeSignMessage,
 } from "./jade";
 import {
   LEDGER,
@@ -219,6 +220,11 @@ export function SignMessage({
   message: string;
 }) {
   switch (keystore) {
+    case JADE:
+      return new JadeSignMessage({
+        bip32Path,
+        message,
+      });
     case LEDGER:
       return new LedgerSignMessage({
         bip32Path,
