@@ -7,8 +7,8 @@ import {
   validateBIP32Path,
   validateExtendedPublicKey,
 } from "@caravan/bitcoin";
+import { PublicBitcoinProvider } from "@caravan/clients";
 import { Box, Button, FormHelperText, Grid } from "@mui/material";
-import { ClientType } from "@caravan/clients";
 import { downloadFile } from "../../utils";
 import {
   resetWallet as resetWalletAction,
@@ -56,7 +56,8 @@ import {
   SET_CLIENT_TYPE,
   SET_CLIENT_URL,
   SET_CLIENT_USERNAME,
-  setClientWalletName,
+  SET_CLIENT_WALLET_NAME,
+  SET_CLIENT_PROVIDER,
 } from "../../actions/clientActions";
 import { clientPropTypes, slicePropTypes } from "../../proptypes";
 import { ExtendedPublicKeyImporters } from "./ExtendedPublicKeyImporters";
@@ -101,8 +102,8 @@ class CreateWallet extends React.Component {
     if (config.client) {
       const clientProperties = [
         "public",
-        ClientType.MEMPOOL,
-        ClientType.BLOCKSTREAM,
+        PublicBitcoinProvider.MEMPOOL,
+        PublicBitcoinProvider.BLOCKSTREAM,
       ].includes(config.client.type)
         ? ["type"]
         : ["type", "url", "username"];
@@ -275,6 +276,7 @@ class CreateWallet extends React.Component {
       setClientUsername,
       setWalletName,
       updateWalletPolicyRegistrations,
+      setClientProvider,
     } = this.props;
 
     const walletConfiguration = JSON.parse(configJson);
@@ -287,11 +289,20 @@ class CreateWallet extends React.Component {
 
     // set client to unknown
     if (walletConfiguration.client) {
-      setClientType(walletConfiguration.client.type);
-      if (walletConfiguration.client.type === "private") {
+      const clientType = walletConfiguration.client.type;
+      if (clientType === "private") {
+        setClientType(clientType);
         setClientUrl(walletConfiguration.client.url);
         setClientUsername(walletConfiguration.client.username);
         setWalletName(walletConfiguration.client.walletName);
+      } else if (clientType === "mempool" || clientType === "blockstream") {
+        setClientType("public");
+        setClientProvider(clientType); // This will set provider to "mempool" or "blockstream"
+      } else {
+        setClientType(clientType);
+        if (walletConfiguration.client.provider) {
+          setClientProvider(walletConfiguration.client.provider);
+        }
       }
     } else {
       setClientType("unknown");
@@ -599,6 +610,7 @@ CreateWallet.propTypes = {
   walletName: PropTypes.string.isRequired,
   walletDetailsText: PropTypes.string.isRequired,
   updateWalletPolicyRegistrations: PropTypes.func.isRequired,
+  setClientProvider: PropTypes.func.isRequired,
 };
 
 CreateWallet.defaultProps = {
@@ -653,8 +665,9 @@ const mapDispatchToProps = {
     setClientUrl: SET_CLIENT_URL,
     setClientUsername: SET_CLIENT_USERNAME,
     setClientPassword: SET_CLIENT_PASSWORD,
+    setWalletName: SET_CLIENT_WALLET_NAME,
+    setClientProvider: SET_CLIENT_PROVIDER,
   }),
-  setWalletName: setClientWalletName,
   updateDepositNode: updateDepositSliceAction,
   updateChangeNode: updateChangeSliceAction,
 };
