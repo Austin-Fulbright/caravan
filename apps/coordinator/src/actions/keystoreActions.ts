@@ -5,6 +5,7 @@ import {
   LEDGER,
   HERMIT,
   COLDCARD,
+  BCUR2,
 } from "@caravan/wallets";
 
 export const SET_KEYSTORE = "SET_KEYSTORE";
@@ -17,7 +18,8 @@ type KeyStoreType =
   | typeof TREZOR
   | typeof LEDGER
   | typeof HERMIT
-  | typeof COLDCARD;
+  | typeof COLDCARD
+  | typeof BCUR2;
 
 export type SetKeystoreAction = {
   type: typeof SET_KEYSTORE;
