@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.3
+
+### Patch Changes
+
+- [#322](https://github.com/caravan-bitcoin/caravan/pull/322) [`468d833`](https://github.com/caravan-bitcoin/caravan/commit/468d83311d977c0c06c313037093f60586ebfaa5) Thanks [@bucko13](https://github.com/bucko13)! - introduce tanstack query and patch transactions fetching
+
 ## 1.9.2
 
 ### Patch Changes
