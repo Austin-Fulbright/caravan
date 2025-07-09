@@ -1,5 +1,11 @@
 # @caravan/clients
 
+## 0.5.1
+
+### Patch Changes
+
+- [#329](https://github.com/caravan-bitcoin/caravan/pull/329) [`65344a9`](https://github.com/caravan-bitcoin/caravan/commit/65344a9f5890b93f4833514a3f7d331458344ab5) Thanks [@Legend101Zz](https://github.com/Legend101Zz)! - minor change to `getTransactionHex` and exported `TransactionDetails` type , needed for RBF PR changes
+
 ## 0.5.0
 
 ### Minor Changes
